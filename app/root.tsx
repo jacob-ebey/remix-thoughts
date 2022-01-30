@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import type { ReactNode } from "react";
 import {
+  json,
+  redirect,
   Link,
   Links,
   LiveReload,
@@ -11,17 +13,64 @@ import {
   useCatch,
   useLocation,
   useMatches,
+  useTransition,
 } from "remix";
-import type { MetaFunction } from "remix";
+import type { ActionFunction, MetaFunction, ThrownResponse } from "remix";
+import NProgress from "nprogress";
+import nProgressStyles from "nprogress/nprogress.css";
 
 import mainStylesHref from "awsm.css/dist/awsm.min.css";
 import themeStylesHref from "awsm.css/dist/awsm_theme_mischka.min.css";
 
+import { commitSession, getSession } from "~/session.server";
+import { formatZodError, parseZodFormData } from "~/utils/zod";
+import { LoginForm, LoginFormData } from "~/components/login-form";
+import type { LoginActionData } from "~/components/login-form";
+
 export const meta: MetaFunction = () => {
   return {
-    title: "Remix PWA",
+    title: "Thoughts",
     description: "An example PWA built with Remix.",
   };
+};
+
+export let action: ActionFunction = async ({ request }) => {
+  let [parsed, session] = await Promise.all([
+    parseZodFormData(request, LoginFormData),
+    getSession(request.headers.get("Cookie")),
+  ]);
+
+  if (!parsed.success) {
+    throw json<LoginActionData>(
+      {
+        errors: formatZodError(parsed.error),
+      },
+      { status: 401 }
+    );
+  }
+
+  if (!process.env.LOGIN_PASSWORD) {
+    throw json<LoginActionData>(
+      {
+        error: "Application has not been configured to allow login.",
+      },
+      { status: 500 }
+    );
+  }
+
+  if (process.env.LOGIN_PASSWORD !== parsed.data.password) {
+    throw json<LoginActionData>({ error: "Failed to login" }, { status: 401 });
+  }
+
+  session.set("loggedIn", true);
+
+  let url = new URL(request.url);
+  let redirectTo = url.searchParams.get("redirect");
+  redirectTo = !redirectTo?.startsWith("/") ? "/" : redirectTo;
+
+  return redirect(redirectTo, {
+    headers: { "Set-Cookie": await commitSession(session) },
+  });
 };
 
 export default function RootRoute() {
@@ -32,26 +81,35 @@ export default function RootRoute() {
   );
 }
 
-export function CatchBoundary() {
-  let { data, status } = useCatch();
+type ThrownResponses =
+  | ThrownResponse<401, null>
+  | ThrownResponse<401, LoginActionData>
+  | ThrownResponse<404, any>
+  | ThrownResponse<500, any>;
 
-  let message = data?.message;
-  if (!message) {
+export function CatchBoundary() {
+  let { data, status } = useCatch<ThrownResponses>();
+
+  let body = data?.message ? <h1>data?.message</h1> : null;
+  if (!body) {
     switch (status) {
+      case 401:
+        body = <LoginForm />;
+        break;
       case 404:
-        message = "Page not found";
+        body = <h1>Page not found</h1>;
         break;
       case 500:
-        message = "Internal server error";
+        body = <h1>Internal server error</h1>;
         break;
       default:
-        message = "Something went wrong";
+        body = <h1>Something went wrong</h1>;
     }
   }
 
   return (
     <Document>
-      <h1>{message}</h1>
+      <article>{body}</article>
     </Document>
   );
 }
@@ -70,6 +128,12 @@ let isMount = true;
 function Document({ children }: { children: ReactNode }) {
   let location = useLocation();
   let matches = useMatches();
+  let transition = useTransition();
+
+  useEffect(() => {
+    if (transition.state === "idle") NProgress.done();
+    else NProgress.start();
+  }, [transition]);
 
   useEffect(() => {
     let mounted = isMount;
@@ -110,10 +174,11 @@ function Document({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <meta name="theme-color" content="#000000" />
+        <meta name="theme-color" content="#c34138" />
         <Meta />
         <link rel="stylesheet" href={mainStylesHref} />
         <link rel="stylesheet" href={themeStylesHref} />
+        {!isMount && <link rel="stylesheet" href={nProgressStyles} />}
 
         <link rel="manifest" href="/resources/manifest.json" />
         <link
@@ -189,18 +254,15 @@ function Document({ children }: { children: ReactNode }) {
       </head>
       <body>
         <header>
-          <h1>Remix PWA</h1>
+          <h1>Thoughts</h1>
           <nav>
             <ul>
               <li>
                 <Link to="/">Home</Link>
               </li>
               <li>
-                <Link to="/about">About</Link>
-              </li>
-              <li>
                 <a
-                  href="https://github.com/jacob-ebey/remix-pwa"
+                  href="https://github.com/jacob-ebey/remix-thoughts"
                   target="_blank"
                   rel="noreferrer noopener"
                 >

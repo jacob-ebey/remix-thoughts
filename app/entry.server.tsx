@@ -2,6 +2,8 @@ import { renderToString } from "react-dom/server";
 import { RemixServer } from "remix";
 import type { EntryContext } from "remix";
 
+import "~/libs/prisma.server";
+
 export default function handleRequest(
   request: Request,
   responseStatusCode: number,
@@ -16,6 +18,6 @@ export default function handleRequest(
 
   return new Response("<!DOCTYPE html>" + markup, {
     status: responseStatusCode,
-    headers: responseHeaders
+    headers: responseHeaders,
   });
 }
