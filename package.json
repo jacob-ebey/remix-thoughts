@@ -12,7 +12,7 @@
     "dev:remix": "dotenv -- remix dev",
     "dev:worker": "esbuild ./app/entry.worker.ts --outfile=./public/entry.worker.js --bundle --format=esm --define:process.env.NODE_ENV='\"development\"' --watch",
     "start": "cross-env NODE_ENV=production remix-serve build",
-    "postinstall": "remix setup node"
+    "postinstall": "remix setup node && prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^3.8.1",
