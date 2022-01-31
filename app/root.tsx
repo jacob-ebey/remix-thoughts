@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import {
   json,
   redirect,
+  Form,
   Link,
   Links,
   LiveReload,
@@ -15,7 +16,12 @@ import {
   useMatches,
   useTransition,
 } from "remix";
-import type { ActionFunction, MetaFunction, ThrownResponse } from "remix";
+import type {
+  ActionFunction,
+  LoaderFunction,
+  MetaFunction,
+  ThrownResponse,
+} from "remix";
 import NProgress from "nprogress";
 import nProgressStyles from "nprogress/nprogress.css";
 
@@ -71,6 +77,17 @@ export let action: ActionFunction = async ({ request }) => {
   return redirect(redirectTo, {
     headers: { "Set-Cookie": await commitSession(session) },
   });
+};
+
+type LoaderData = {
+  loggedIn: boolean;
+};
+
+export let loader: LoaderFunction = async ({ request }) => {
+  let session = await getSession(request.headers.get("Cookie"));
+  let loggedIn = !!session.get("loggedIn");
+
+  return json<LoaderData>({ loggedIn });
 };
 
 export default function RootRoute() {
@@ -129,6 +146,12 @@ function Document({ children }: { children: ReactNode }) {
   let location = useLocation();
   let matches = useMatches();
   let transition = useTransition();
+
+  let { loggedIn } = (matches.find((m) => m.id === "root")?.data as
+    | LoaderData
+    | undefined) || {
+    loggedIn: false,
+  };
 
   useEffect(() => {
     if (transition.state === "idle") NProgress.done();
@@ -269,6 +292,17 @@ function Document({ children }: { children: ReactNode }) {
                   Source
                 </a>
               </li>
+              {loggedIn && (
+                <li>
+                  <Form
+                    style={{ display: "contents" }}
+                    action="/logout"
+                    method="post"
+                  >
+                    <button>Logout</button>
+                  </Form>
+                </li>
+              )}
             </ul>
           </nav>
         </header>

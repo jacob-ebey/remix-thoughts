@@ -40,7 +40,7 @@ export let action: ActionFunction = async ({ request }) => {
       data: parsed.data,
     });
 
-    return redirect(`/permalink/${thought.id}`);
+    return redirect(`/edit/${thought.id}`);
   } catch (error: unknown) {
     console.error("new action", error);
 

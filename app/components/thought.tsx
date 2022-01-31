@@ -20,7 +20,12 @@ export function ThoughtDisplay({ thought }: { thought: Thought }) {
   return (
     <section key={thought.id}>
       <h2>
-        <Link to={`/permalink/${thought.id}`}>{thought.title}</Link>
+        <Link to={`/permalink/${thought.id}`}>{thought.title}</Link>{" "}
+        {!thought.published && (
+          <small>
+            (<Link to={`/edit/${thought.id}`}>edit</Link>)
+          </small>
+        )}
       </h2>
       {body}
     </section>
