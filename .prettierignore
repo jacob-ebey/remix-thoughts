@@ -1,0 +1,8 @@
+node_modules
+
+/.cache
+/build
+/public/build
+/public/entry.worker.js
+.env
+package-lock.json

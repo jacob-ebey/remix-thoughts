@@ -4,15 +4,20 @@
   "description": "",
   "license": "",
   "scripts": {
-    "typecheck": "tsc",
+    "====== SETUP SCRIPTS ======": "",
+    "postinstall": "remix setup node && prisma generate",
+    "====== BUILD SCRIPTS ======": "",
     "build": "run-p build:*",
     "build:remix": "cross-env NODE_ENV=production remix build",
-    "build:worker": "esbuild ./app/entry.worker.ts --outfile=./public/entry.worker.js --minify --bundle --format=esm --define:process.env.NODE_ENV='\"production\"'",
+    "build:worker": "esbuild ./app/entry.worker.ts --outfile=./public/entry.worker.js --minify --bundle --format=esm --main-fields=module,main --define:process.env.NODE_ENV='\"production\"'",
+    "====== DEV SCRIPTS ======": "",
     "dev": "run-p dev:*",
     "dev:remix": "dotenv -- remix dev",
-    "dev:worker": "esbuild ./app/entry.worker.ts --outfile=./public/entry.worker.js --bundle --format=esm --define:process.env.NODE_ENV='\"development\"' --watch",
+    "dev:worker": "esbuild ./app/entry.worker.ts --outfile=./public/entry.worker.js --bundle --format=esm --main-fields=module,main --define:process.env.NODE_ENV='\"development\"' --watch",
     "start": "cross-env NODE_ENV=production remix-serve build",
-    "postinstall": "remix setup node && prisma generate"
+    "====== CODE QUALITY SCRIPTS ======": "",
+    "typecheck": "tsc",
+    "format": "npx prettier --write ."
   },
   "dependencies": {
     "@prisma/client": "^3.8.1",
@@ -35,6 +40,7 @@
     "cross-env": "^7.0.3",
     "dotenv-cli": "^4.1.1",
     "npm-run-all": "^4.1.5",
+    "prettier": "2.5.1",
     "typescript": "^4.1.2"
   },
   "engines": {

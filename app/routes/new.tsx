@@ -7,7 +7,7 @@ import prisma from "~/libs/prisma.server";
 import { formatZodError, parseZodFormData } from "~/utils/zod";
 import type { FormattedErrors } from "~/utils/zod";
 
-export let CreateFormData = z.object({
+let CreateFormData = z.object({
   title: z.string().min(1),
   text: z.string().min(1),
 });

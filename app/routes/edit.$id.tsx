@@ -16,10 +16,10 @@ import prisma from "~/libs/prisma.server";
 import { formatZodError, parseZodFormData } from "~/utils/zod";
 import type { FormattedErrors } from "~/utils/zod";
 
-export let EditFormData = z.object({
+let EditFormData = z.object({
   title: z.string().min(1),
   text: z.string().min(1),
-  published: z.string(),
+  published: z.string().optional(),
 });
 
 type EditActionData = {
@@ -46,7 +46,6 @@ export let action: ActionFunction = async ({ params, request }) => {
   }
 
   let { published, ...data } = parsed.data;
-  console.log(published);
   if (typeof published === "string") {
     (data as any).published = published === "true";
   }
@@ -69,8 +68,6 @@ export let action: ActionFunction = async ({ params, request }) => {
     );
   }
 };
-
-export let worker: ActionFunction = ({ request }) => {};
 
 type LoaderData = {
   thought: Thought;
@@ -96,7 +93,6 @@ export let loader: LoaderFunction = async ({ params, request }) => {
 
 export default function EditRoute() {
   let { thought } = useLoaderData<LoaderData>();
-  console.log(thought);
   let { error, errors } = useActionData<EditActionData>() || {};
   let params = useParams();
   let transition = useTransition();
